@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "zhanwai-devkit",
+  "name": "开发者效率工具箱",
+  "description": "DevKit · 栈外手记出品，本地优先的开发者工作台",
+  "runtime": { "type": "node", "min_version": "22.0" },
+  "entry": { "main": "server/main.mjs", "health": "/__health" }
+}

@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "top2675033139",
+  "name": "开发者效率工具箱",
+  "name_en": "DevKit",
+  "description": "DevKit · 栈外手记出品，本地优先的开发者工作台",
+  "min_platform_version": null,
+  "runtime": {
+    "type": "node",
+    "min_version": "22.0",
+    "extensions": []
+  },
+  "database": null,
+  "entry": {
+    "public_dir": "",
+    "main": "server/main.mjs",
+    "router": null,
+    "health": "/__health",
+    "index": null
+  },
+  "scripts": {
+    "install": null,
+    "migrate": null,
+    "uninstall": null
+  },
+  "data": {
+    "dirs": [],
+    "schema_version": null
+  },
+  "startup": {
+    "auto_start": false
+  },
+  "ui": {
+    "icon": "icon.png",
+    "open_mode": "app_window",
+    "window": null
+  },
+  "author": null,
+  "license": null,
+  "homepage": null
+}

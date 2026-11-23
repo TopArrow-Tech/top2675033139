@@ -571,7 +571,7 @@ export default function App() {
             <div className="brand-footer">
               {!collapsed && (
                 <span>
-                  {t("brand")} <small>v1.0.0</small>
+                  {t("brand")} <small>v1.0.1</small>
                 </span>
               )}
               <button
@@ -722,6 +722,7 @@ export default function App() {
                     input={s.input}
                     second={s.second ?? ""}
                     output={s.output}
+                    error={s.error}
                     onInput={(input) => update({ input, error: "" })}
                     onSecond={(second) => update({ second, error: "" })}
                     onOutput={(output) => update({ output })}
@@ -821,7 +822,7 @@ export default function App() {
                     )}
                   </div>
                   <div className="secondary-actions">
-                    {tool === "json" && (
+                    {
                       <button
                         title={t("compareFullscreen")}
                         onClick={(e) =>
@@ -831,7 +832,7 @@ export default function App() {
                         <Maximize2 size={14} />
                         {t("compareFullscreen")}
                       </button>
-                    )}
+                    }
                     <button
                       onClick={() => {
                         cancel();
@@ -886,23 +887,40 @@ export default function App() {
                   {expanded && (
                     <div className="json-fullscreen-toolbar">
                       <strong>
-                        {t("json")} · {t("input")} / {t("output")}
+                        {t(tool)} · {t("input")} / {t("output")}
                       </strong>
                       <span>
                         {stats.chars.toLocaleString()} {t("chars")}
                       </span>
                       <div>
-                        {(
-                          ["pretty", "minify", "validate", "tree"] as const
-                        ).map((a) => (
-                          <button
-                            key={a}
-                            disabled={busy}
-                            onClick={() => run(a)}
-                          >
-                            {t(a)}
-                          </button>
-                        ))}
+                        {tool === "json" &&
+                          (
+                            ["pretty", "minify", "validate", "tree"] as const
+                          ).map((a) => (
+                            <button
+                              key={a}
+                              disabled={busy}
+                              onClick={() => run(a)}
+                            >
+                              {t(a)}
+                            </button>
+                          ))}
+                        {tool !== "json" && (
+                          <>
+                            <button
+                              disabled={busy}
+                              onClick={() => run("encode")}
+                            >
+                              {t("encode")}
+                            </button>
+                            <button
+                              disabled={busy}
+                              onClick={() => run("decode")}
+                            >
+                              {t("decode")}
+                            </button>
+                          </>
+                        )}
                         <button onClick={closeExpanded}>
                           <Minimize2 size={14} />
                           {t("exitFullscreen")} <kbd>Esc</kbd>

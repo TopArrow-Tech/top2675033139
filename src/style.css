@@ -1801,3 +1801,188 @@ button {
     }
   }
 }
+
+/* Expand the complete workspace so sources and results remain together. */
+.advanced-workbench.advanced-fullscreen {
+  position: fixed;
+  inset: 8px;
+  z-index: 100;
+  padding: 12px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+}
+.advanced-fullscreen-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.advanced-fullscreen .advanced-editors {
+  flex: 1 0 55vh;
+  min-height: 300px;
+}
+.advanced-fullscreen .advanced-editors > .editor-panel {
+  height: auto;
+  min-height: 300px;
+}
+.advanced-fullscreen.diff-workbench .advanced-editors {
+  flex: 0 0 28vh;
+  min-height: 180px;
+}
+.advanced-fullscreen.diff-workbench .advanced-editors > .editor-panel {
+  min-height: 180px;
+  height: 28vh;
+}
+.advanced-fullscreen .diff-result {
+  flex: 1 0 40vh;
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  min-height: 240px;
+}
+.advanced-fullscreen .diff-rows {
+  flex: 1;
+  max-height: none;
+}
+.diff-row.added {
+  background: #25b66b30;
+  box-shadow: inset 4px 0 #25b66b;
+}
+.diff-row.removed {
+  background: #ef526436;
+  box-shadow: inset 4px 0 #ef5264;
+}
+.diff-row.changed {
+  background: #e7ad2420;
+  box-shadow: inset 4px 0 #e7ad24;
+}
+.char-added {
+  background: #138d48;
+  color: #fff;
+  font-weight: 700;
+  outline: 1px solid #42ce82;
+  border-radius: 2px;
+}
+.char-removed {
+  background: #bd3044;
+  color: #fff;
+  font-weight: 700;
+  outline: 1px solid #fc7d8d;
+  border-radius: 2px;
+}
+
+/* Keep icon buttons usable when navigation labels are hidden. */
+.shell.collapsed {
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+.collapsed .sidebar {
+  padding: 18px 8px 10px;
+  min-width: 0;
+}
+.collapsed .brand {
+  padding-left: 0;
+  justify-content: center;
+}
+.collapsed .sidebar nav {
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.collapsed .sidebar nav::-webkit-scrollbar {
+  display: none;
+}
+.collapsed .nav-group {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.collapsed .sidebar .nav-item {
+  width: 44px;
+  height: 40px;
+  min-height: 40px;
+  margin: 0 auto 4px;
+  padding: 8px;
+  gap: 0;
+  justify-content: center;
+}
+.collapsed .nav-item > svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.collapsed .search-button {
+  width: 44px;
+  min-height: 40px;
+  margin-inline: auto;
+  flex-shrink: 0;
+}
+.collapsed .search-button > svg {
+  flex-shrink: 0;
+}
+
+.advanced-fullscreen .advanced-editors > .json-split-divider {
+  grid-row: 1;
+  grid-column: 2;
+}
+.advanced-fullscreen .advanced-editors > .editor-panel:first-child {
+  grid-column: 1;
+}
+.advanced-fullscreen .advanced-editors > .editor-panel:last-child {
+  grid-column: 3;
+}
+.advanced-editors[data-resizing] {
+  cursor: col-resize;
+  user-select: none;
+}
+.advanced-editors[data-resizing] .monaco-editor {
+  pointer-events: none;
+}
+.advanced-editors[data-resizing] .json-split-divider > span {
+  background: var(--accent);
+}
+
+.advanced-fullscreen.diff-workbench .advanced-editors {
+  flex: 0 0 32vh;
+  min-height: 120px;
+}
+.advanced-fullscreen.diff-workbench .advanced-editors > .editor-panel {
+  height: 100%;
+  min-height: 0;
+}
+.advanced-fullscreen.diff-workbench .diff-result {
+  flex: 1 0 160px;
+  min-height: 160px;
+  margin-top: 0;
+}
+.advanced-fullscreen > .advanced-fullscreen-title,
+.advanced-fullscreen > .tool-options,
+.advanced-fullscreen > .tool-hint,
+.advanced-fullscreen > .action-bar,
+.advanced-fullscreen > .advanced-status {
+  flex-shrink: 0;
+}
+.height-divider {
+  flex: 0 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: row-resize;
+  touch-action: none;
+  outline-offset: -2px;
+}
+.height-divider > span {
+  width: 42px;
+  height: 3px;
+  border-radius: 4px;
+  background: var(--border);
+}
+.height-divider:hover > span,
+.height-divider:focus-visible > span {
+  background: var(--accent);
+}
+.advanced-editors[data-height-resizing] .monaco-editor {
+  pointer-events: none;
+}

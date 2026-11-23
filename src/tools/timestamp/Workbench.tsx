@@ -2,7 +2,11 @@ import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { Copy, Play, Pause, RefreshCw } from "lucide-react";
 import MaskedDateInput from "./MaskedDateInput";
 import DateInput from "./DateInput";
-import { dateTimeInputValue, normalizeDateInput } from "./input";
+import {
+  dateTimeInputValue,
+  normalizeDateInput,
+  currentYearInput,
+} from "./input";
 import { ToolError, check } from "../shared";
 import type { Key } from "../../locales";
 import type { dateResult } from "./logic";
@@ -25,9 +29,9 @@ export type TimestampState = {
   errors: Partial<Record<Row, string>>;
   last?: Result;
 };
-const initial = (): TimestampState => ({
+const initial = (zone: string): TimestampState => ({
   dateText: "",
-  segments: "",
+  segments: currentYearInput(zone),
   units: { timestamp: "seconds", text: "seconds", segments: "seconds" },
   results: {},
   errors: {},
@@ -46,7 +50,7 @@ type Props = {
 };
 export default function TimestampWorkbench(p: Props) {
   const { t, zone, input } = p;
-  const state = p.state ?? initial();
+  const state = p.state ?? initial(zone);
   const [now, setNow] = useState(Date.now()),
     [running, setRunning] = useState(true),
     [busy, setBusy] = useState<Row | null>(null);
@@ -61,6 +65,24 @@ export default function TimestampWorkbench(p: Props) {
     clearTimeout(timer.current);
     setBusy(null);
   }
+  useEffect(() => {
+    // Refresh the editable timestamp on every visit, respecting its selected unit.
+    p.onInput(
+      String(
+        state.units.timestamp === "milliseconds"
+          ? Date.now()
+          : Math.floor(Date.now() / 1000),
+      ),
+    );
+    p.onState({
+      ...state,
+      segments: state.segments || currentYearInput(zone),
+      last: undefined,
+      results: { ...state.results, timestamp: undefined },
+      errors: { ...state.errors, timestamp: undefined },
+    });
+    p.onOutput("");
+  }, []);
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -248,7 +270,7 @@ export default function TimestampWorkbench(p: Props) {
     stop();
     p.onInput("1735689600");
     p.onState({
-      ...initial(),
+      ...initial(zone),
       dateText: "2025-01-01 08:00:00",
       segments: "2025-01-01T08:00:00",
     });
@@ -315,8 +337,8 @@ export default function TimestampWorkbench(p: Props) {
           <button
             onClick={() => {
               stop();
-              p.onInput("");
-              p.onState(initial());
+              p.onInput(String(Math.floor(Date.now() / 1000)));
+              p.onState(initial(zone));
               p.onOutput("");
             }}
           >

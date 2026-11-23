@@ -1,10 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { deflateSync, deflateRawSync } from "node:zlib";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const asset = path.join(root, "assets");
-const release = path.join(root, "release");
+// Keep distribution copies outside the app root used by TopArrow packaging.
+const release = await fs.mkdtemp(path.join(os.tmpdir(), "devkit-release-"));
 await fs.mkdir(asset, { recursive: true });
 await fs.mkdir(release, { recursive: true });
 function crc32(data) {
@@ -266,6 +268,6 @@ console.log(
     files: files.length,
     uncompressedBytes: total,
     iconBytes: png.length,
-    package: "release/DevKit-market-ready.zip",
+    package: path.join(release, "DevKit-market-ready.zip"),
   }),
 );

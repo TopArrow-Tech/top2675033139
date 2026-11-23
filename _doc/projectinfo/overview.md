@@ -4,7 +4,7 @@
 - 应用 ID：zhanwai-devkit（发布后不可修改）
 - 显示名：开发者效率工具箱 / DevKit
 - 开发者：栈外手记
-- 版本：1.0.0，完整 12 工具
+- 版本：1.0.1，完整 12 工具
 - 运行时：顶箭 Node，manifest 最低 22；开发机顶箭内置 Node 24
 
 ## 技术栈
@@ -45,7 +45,7 @@ URL：URI 组件/完整 URI 编解码，重复 Query 参数的解析、编辑和
 
 新增依赖：sql-formatter 15.9.0（词法压缩使用其内部 lexer，升级需回归测试）、diff、cron-parser。Hash 使用 Web Crypto；UUID 使用安全随机数；进制使用 BigInt。不增加运行时数据库或业务文件。
 
-`assets/` 为原创图标；`scripts/prepare-release.mjs` 汇总完整生产依赖许可、生成图标与分发 ZIP；`release/DevKit/` 为最小运行目录，`release/DevKit-market-ready.zip` 为待上架分发包，`release/screenshots/` 为实际页面截图。包内排除源码规范、Git、开发依赖和数据。构建后使用脚本重新生成分发包，避免资源不同步。
+`assets/` 为原创图标；`scripts/prepare-release.mjs` 汇总生产依赖许可、生成图标与分发 ZIP。运行目录和 ZIP 输出到系统临时目录 `devkit-release-*`，不再在应用根目录生成 release/，避免顶箭直接打包应用目录时带入重复安装包及草稿。
 
 ## 紧凑工作区与并排全屏
 标题旁放置工具联动，收紧导航、顶部、操作栏和间距。JSON 以 CSS 固定定位展开同一个双栏容器，两个 Monaco 实例保持挂载，顶部保留格式化/压缩/校验/树形及退出；背景控件 inert，Esc 恢复焦点。
@@ -54,3 +54,14 @@ URL：URI 组件/完整 URI 编解码，重复 Query 参数的解析、编辑和
 ## 固定日期模板与分栏调整
 `timestamp/MaskedDateInput.tsx` 作为日期字符串行适配器，复用 `DateInput.tsx` 的六段数字输入外观，两行的占位符、字号和间距一致；`mask.ts` 辅助处理整段数字粘贴。三行共享 CSS grid-area，通过容器查询在窄区域统一换行，并为旧浏览器提供媒体查询后备。
 JSON 双栏加入 `editor/SplitDivider.tsx`；`split.ts` 限制 20%–80% 比例。拖动由 Pointer Capture 跟踪，动画帧合并更新；支持双击/Enter 均分、方向键、Home/End。宽度只在页面会话内保存，不记录输入内容，不重新创建编辑器。
+
+## 2026-11-04 工作区扩展
+高级工具的全屏改为整个 Workbench 固定定位展开，保留选项、操作、双栏输入和结构化结果，Esc 退出并恢复焦点；基础编码工具沿用 JSON 双栏全屏。时间戳组件挂载时按照当前单位填入当前 Unix 值，清空重置为当前秒值。两种日期输入目前能力相同，标为输入 A/B，支持独立填写两组日期。
+
+## 省略日期字段与统一分栏
+日期输入转换前在 input.ts 中补齐空月日为 01、空时分秒为 00，保留严格校验及 ISO 偏移；输入 B 按所选时区初始化当前年份。高级工具全屏复用 editor/SplitDivider.tsx，左右比例仅保留于页面内存，文本对比并排结果同步比例。
+
+文本对比全屏通过 HeightDivider 调节上方原文/新文本与下方差异结果的高度，保留最小可见区域；支持拖动、上下方向键、双击恢复默认。
+
+## 发布目录体积
+node_modules 不是运行依赖，发布前应移出应用目录或删除；仅修改源码后需要恢复依赖并重新构建 public。当前开发依赖在系统临时目录以 devkit-build-deps-* 暂存，若系统已清理则按 package-lock.json 重新安装。不要以软链接把开发依赖放回待发布目录。

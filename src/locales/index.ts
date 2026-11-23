@@ -1,6 +1,8 @@
 import { advancedZh, advancedEn } from "./advanced";
 export const zh = {
   resizeEditors: "调整输入与结果宽度",
+  resizeHeight: "调整输入与差异结果高度",
+  resizeHeightHint: "上下拖动调整高度，双击恢复默认；上下方向键可微调",
   resizeEditorsHint: "拖动调整左右宽度，双击恢复均分；方向键可微调",
   secondsShort: "秒",
   millisecondsShort: "毫秒",
@@ -8,8 +10,8 @@ export const zh = {
   startClock: "开始",
   stopClock: "停止",
   refreshClock: "刷新",
-  dateString: "日期字符串",
-  dateParts: "分段日期",
+  dateString: "日期输入 A",
+  dateParts: "日期输入 B",
   toDateShort: "转日期",
   toUnixShort: "转时间戳",
   conversionDetails: "转换详情",
@@ -144,6 +146,9 @@ export const zh = {
 export type Key = keyof typeof zh;
 export const en: Record<Key, string> = {
   resizeEditors: "Resize input and output",
+  resizeHeight: "Resize input and diff result height",
+  resizeHeightHint:
+    "Drag vertically to resize; double-click to reset; use Up/Down to adjust",
   resizeEditorsHint:
     "Drag to resize; double-click to split equally; arrow keys fine-tune",
   secondsShort: "s",
@@ -152,8 +157,8 @@ export const en: Record<Key, string> = {
   startClock: "Start",
   stopClock: "Stop",
   refreshClock: "Refresh",
-  dateString: "Date string",
-  dateParts: "Date fields",
+  dateString: "Date input A",
+  dateParts: "Date input B",
   toDateShort: "To date",
   toUnixShort: "To Unix",
   conversionDetails: "Conversion details",

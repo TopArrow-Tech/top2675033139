@@ -3,7 +3,9 @@
 <!-- toparrow-author -->
 **Author:** [栈外手记](https://www.toparrow.top/web/publisher/%E6%A0%88%E5%A4%96%E6%89%8B%E8%AE%B0)
 
-[This version on TopArrow](https://www.toparrow.top/web/version/top2675033139-x0rncy)
+Based on [DevKit](https://github.com/TopArrow-Tech/top2675033139) by [栈外手记](https://www.toparrow.top/web/publisher/%E6%A0%88%E5%A4%96%E6%89%8B%E8%AE%B0).
+
+[This version on TopArrow](https://www.toparrow.top/web/version/top2675033139-39olj6)
 <!-- /toparrow-author -->
 
 
@@ -65,7 +67,7 @@ npm run release:prepare
 
 开发依赖安装需要网络，运行应用不需要网络。`npm run dev` 为开发预览；顶箭打开使用 `public/`，改源码后必须构建再刷新。
 
-`release:prepare` 构建后生成图标、生产依赖许可和干净 ZIP。市场使用 `release/DevKit-market-ready.zip`，不要上传整个源码工作区。包内没有 Git、node_modules、用户数据、开发说明或运行时。工具处理逻辑已编译到本地静态资源。
+`release:prepare` 构建后将干净运行目录与 ZIP 输出到系统临时目录 `devkit-release-*`，完成时打印 ZIP 的完整路径，避免待打包应用中混入重复分发文件。包内没有 Git、node_modules、用户数据、开发说明或运行时。工具处理逻辑已编译到本地静态资源。
 
 SQL 固定 sql-formatter 15.9.0，压缩复用其词法器；升级此库必须回归字符串、注释及方言测试。Monaco 按需加载，资源较大，会产生构建体积提示；编辑器部分内置菜单和诊断为英文。
 
@@ -83,7 +85,7 @@ SQL 固定 sql-formatter 15.9.0，压缩复用其词法器；升级此库必须�
 
 ## 验证与发布准备
 
-自动测试覆盖全部工具，构建和 Mac 本地生产页面验证已执行。完整记录见 `_doc/testcase/full-suite.md`。市场文案和检查记录见 `_doc/输出文案/`，图标及截图在 `release/`。
+自动测试覆盖全部工具，构建和 Mac 本地生产页面验证已执行。完整记录见 `_doc/testcase/full-suite.md`。市场文案和检查记录见 `_doc/输出文案/`，图标在 `assets/`；发布素材应放在应用目录外，避免随应用打包。
 
 未实现功能：复杂自动识别与自动串联处理。所有本轮要求的 12 个工具与基础联动均已提供。
 

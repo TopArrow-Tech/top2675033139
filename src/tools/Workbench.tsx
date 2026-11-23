@@ -15,6 +15,8 @@ import {
   Maximize2,
   Minimize2,
 } from "lucide-react";
+import HeightDivider from "../editor/HeightDivider";
+import SplitDivider from "../editor/SplitDivider";
 import type { Key } from "../locales";
 import { examples, type AdvancedId } from "../app/registry";
 import { check, ToolError } from "./shared";
@@ -26,6 +28,7 @@ type Props = {
   input: string;
   second: string;
   output: string;
+  error: string;
   onInput: (text: string) => void;
   onSecond: (text: string) => void;
   onOutput: (text: string) => void;
@@ -61,6 +64,9 @@ export default function Workbench(p: Props) {
     [elapsed, setElapsed] = useState(0),
     [file, setFile] = useState<File | null>(null),
     [expanded, setExpanded] = useState<"input" | "output" | null>(null);
+  const [split, setSplit] = useState(50);
+  const [inputHeight, setInputHeight] = useState<number | null>(null);
+  const editorsRef = useRef<HTMLDivElement>(null);
   const worker = useRef<Worker | null>(null),
     serial = useRef(0),
     timeout = useRef<ReturnType<typeof setTimeout>>();
@@ -89,6 +95,31 @@ export default function Workbench(p: Props) {
     window.addEventListener("keydown", escape);
     return () => window.removeEventListener("keydown", escape);
   }, []);
+  useEffect(() => {
+    if (!expanded) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        ".sidebar,.topbar,.tool-heading,.workspace-note,.statusbar",
+      ),
+    );
+    const previous = nodes.map((node) => node.inert);
+    nodes.forEach((node) => {
+      node.inert = true;
+    });
+    const frame = requestAnimationFrame(() =>
+      document
+        .querySelector<HTMLButtonElement>(".advanced-fullscreen-title button")
+        ?.focus(),
+    );
+    return () => {
+      cancelAnimationFrame(frame);
+      nodes.forEach((node, i) => {
+        node.inert = previous[i];
+      });
+      previousFocus?.focus();
+    };
+  }, [Boolean(expanded)]);
   async function run(action = "pretty") {
     stop();
     const version = serial.current;
@@ -245,8 +276,17 @@ export default function Workbench(p: Props) {
   };
   return (
     <div
-      className={`advanced-workbench ${id === "diff" ? "diff-workbench" : ""}`}
+      className={`advanced-workbench ${id === "diff" ? "diff-workbench" : ""} ${expanded ? "advanced-fullscreen" : ""}`}
     >
+      {expanded && (
+        <div className="advanced-fullscreen-title">
+          <strong>{t(id)}</strong>
+          <button onClick={() => setExpanded(null)}>
+            <Minimize2 size={14} />
+            {t("exitFullscreen")} <kbd>Esc</kbd>
+          </button>
+        </div>
+      )}
       {id === "jwt" && (
         <div className="security-banner">
           <strong>{t("unverified")}</strong> · {t("jwtHint")}
@@ -488,6 +528,10 @@ export default function Workbench(p: Props) {
           {busy && <button onClick={stop}>{t("cancel")}</button>}
         </div>
         <div className="secondary-actions">
+          <button onClick={() => setExpanded(expanded ? null : "input")}>
+            <Maximize2 size={14} />
+            {t(expanded ? "exitFullscreen" : "compareFullscreen")}
+          </button>
           <button
             onClick={() => {
               stop();
@@ -518,23 +562,34 @@ export default function Workbench(p: Props) {
           </button>
         </div>
       </div>
-      <div className="editors advanced-editors">
-        <section
-          className={`editor-panel ${expanded === "input" ? "panel-fullscreen" : ""}`}
-        >
+      {expanded && p.error && (
+        <div className="error-message" role="alert">
+          {p.error}
+        </div>
+      )}
+      <div
+        className="editors advanced-editors"
+        ref={editorsRef}
+        style={
+          expanded
+            ? {
+                gridTemplateColumns: `minmax(0, ${split}fr) 12px minmax(0, ${100 - split}fr)`,
+                gap: 0,
+                ...(id === "diff" && inputHeight !== null
+                  ? { flexBasis: inputHeight }
+                  : {}),
+              }
+            : undefined
+        }
+      >
+        <section className="editor-panel">
           <div className="panel-header">
             <span>{t(id === "diff" ? "before" : "input")}</span>
             <button
-              title={t(
-                expanded === "input" ? "exitFullscreen" : "appFullscreen",
-              )}
-              onClick={() => setExpanded(expanded === "input" ? null : "input")}
+              title={t(expanded ? "exitFullscreen" : "appFullscreen")}
+              onClick={() => setExpanded(expanded ? null : "input")}
             >
-              {expanded === "input" ? (
-                <Minimize2 size={14} />
-              ) : (
-                <Maximize2 size={14} />
-              )}
+              {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>
           </div>
           {edit(
@@ -546,25 +601,25 @@ export default function Workbench(p: Props) {
             id === "sql" ? "sql" : id === "jwt" ? "plaintext" : "plaintext",
           )}
         </section>
-        <section
-          className={`editor-panel ${expanded === "output" ? "panel-fullscreen" : ""}`}
-        >
+        {expanded && (
+          <SplitDivider
+            container={editorsRef}
+            value={split}
+            onChange={setSplit}
+            label={t("resizeEditors")}
+            hint={t("resizeEditorsHint")}
+            valueText={`${Math.round(split)}% / ${Math.round(100 - split)}%`}
+          />
+        )}
+        <section className="editor-panel">
           <div className="panel-header">
             <span>{t(id === "diff" ? "after" : "output")}</span>
             <div>
               <button
-                title={t(
-                  expanded === "output" ? "exitFullscreen" : "appFullscreen",
-                )}
-                onClick={() =>
-                  setExpanded(expanded === "output" ? null : "output")
-                }
+                title={t(expanded ? "exitFullscreen" : "appFullscreen")}
+                onClick={() => setExpanded(expanded ? null : "output")}
               >
-                {expanded === "output" ? (
-                  <Minimize2 size={14} />
-                ) : (
-                  <Maximize2 size={14} />
-                )}
+                {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
               {id !== "diff" && (
                 <>
@@ -710,6 +765,15 @@ export default function Workbench(p: Props) {
           )}
         </section>
       </div>
+      {id === "diff" && result && expanded && (
+        <HeightDivider
+          container={editorsRef}
+          height={inputHeight}
+          onChange={setInputHeight}
+          label={t("resizeHeight")}
+          hint={t("resizeHeightHint")}
+        />
+      )}
       {id === "diff" && result && (
         <section className="diff-result">
           <header>
@@ -730,7 +794,17 @@ export default function Workbench(p: Props) {
           </header>
           <div className={`diff-rows ${options.view}`}>
             {result.rows.slice(0, 1500).map((row: any, i: number) => (
-              <div key={i} className={`diff-row ${row.kind}`}>
+              <div
+                key={i}
+                className={`diff-row ${row.kind}`}
+                style={
+                  expanded && options.view === "side"
+                    ? {
+                        gridTemplateColumns: `40px minmax(0, ${split}fr) minmax(0, ${100 - split}fr)`,
+                      }
+                    : undefined
+                }
+              >
                 <span className="diff-line-number">{i + 1}</span>
                 {options.view === "side" ? (
                   <>
@@ -801,12 +875,6 @@ export default function Workbench(p: Props) {
         {busy ? t("processing") : t("ready")}
         {elapsed > 0 && ` · ${elapsed.toFixed(1)} ms`}
       </div>
-      {expanded && (
-        <div
-          className="editor-fullscreen-backdrop"
-          onClick={() => setExpanded(null)}
-        />
-      )}
     </div>
   );
 }

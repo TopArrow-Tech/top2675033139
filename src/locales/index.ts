@@ -1,3 +1,4 @@
+import { extendedZh, extendedEn } from "./extended";
 import { advancedZh, advancedEn } from "./advanced";
 export const zh = {
   resizeEditors: "调整输入与结果宽度",
@@ -18,6 +19,7 @@ export const zh = {
   timestampZoneHint: "两种方向同时可用，日期按所选时区解释。",
   compareFullscreen: "输入 / 结果同屏全屏",
   ...advancedZh,
+  ...extendedZh,
   appFullscreen: "应用内全屏",
   exitFullscreen: "退出全屏",
   tooManyParameters: "Query 参数最多支持 1,000 项，请缩小输入",
@@ -166,6 +168,7 @@ export const en: Record<Key, string> = {
     "Both directions are available. Dates use the selected timezone.",
   compareFullscreen: "Expand input and output",
   ...advancedEn,
+  ...extendedEn,
   appFullscreen: "Expand editor",
   exitFullscreen: "Exit expanded view",
   tooManyParameters: "Query editing supports up to 1,000 parameters",

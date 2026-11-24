@@ -1,4 +1,14 @@
 import {
+  Image,
+  FileText,
+  Type,
+  Languages,
+  Code,
+  Table,
+  Palette,
+  LockKeyhole,
+  QrCode,
+  NotebookPen,
   Braces,
   Binary,
   Clock,
@@ -13,6 +23,22 @@ import {
   Calculator,
 } from "lucide-react";
 import type { Key } from "../locales";
+export const extendedIds = [
+  "textkit",
+  "unicode",
+  "htmlentity",
+  "dataconvert",
+  "color",
+  "password",
+  "qrcode",
+  "markdown",
+  "image",
+  "pdfword",
+] as const;
+export type ExtendedId = (typeof extendedIds)[number];
+export function isExtended(id: string): id is ExtendedId {
+  return (extendedIds as readonly string[]).includes(id);
+}
 export const ids = [
   "json",
   "sql",
@@ -26,13 +52,29 @@ export const ids = [
   "uuid",
   "cron",
   "radix",
+  ...extendedIds,
 ] as const;
 export type Id = (typeof ids)[number];
-export type AdvancedId = Exclude<Id, "json" | "base64" | "url" | "timestamp">;
+export type AdvancedId = Exclude<
+  Id,
+  "json" | "base64" | "url" | "timestamp" | ExtendedId
+>;
 export function isAdvanced(id: Id): id is AdvancedId {
-  return !["json", "base64", "url", "timestamp"].includes(id);
+  return (
+    !isExtended(id) && !["json", "base64", "url", "timestamp"].includes(id)
+  );
 }
 export const icons = {
+  textkit: Type,
+  unicode: Languages,
+  htmlentity: Code,
+  dataconvert: Table,
+  color: Palette,
+  password: LockKeyhole,
+  qrcode: QrCode,
+  markdown: NotebookPen,
+  image: Image,
+  pdfword: FileText,
   json: Braces,
   sql: Database,
   base64: Binary,
@@ -47,13 +89,27 @@ export const icons = {
   radix: Calculator,
 };
 export const categories: { key: Key; ids: Id[] }[] = [
-  { key: "format", ids: ["json", "sql"] },
-  { key: "encoding", ids: ["base64", "url", "jwt"] },
-  { key: "textCategory", ids: ["regex", "diff"] },
+  { key: "format", ids: ["json", "sql", "dataconvert", "markdown"] },
+  { key: "encoding", ids: ["base64", "url", "jwt", "unicode", "htmlentity"] },
+  { key: "textCategory", ids: ["regex", "diff", "textkit"] },
   { key: "timeCategory", ids: ["timestamp", "cron"] },
-  { key: "computeCategory", ids: ["hash", "uuid", "radix"] },
+  { key: "filesCategory", ids: ["image", "pdfword"] },
+  {
+    key: "computeCategory",
+    ids: ["hash", "uuid", "radix", "color", "password", "qrcode"],
+  },
 ];
 export const keywords: Record<Id, string> = {
+  textkit: "text trim unique case 文本 去重 排序 命名 统计",
+  unicode: "unicode escape 转义 字符",
+  htmlentity: "html entity 实体 转义",
+  dataconvert: "json csv yaml 数据 格式 转换",
+  color: "color hex rgb hsl 颜色 对比度",
+  password: "password random secure 密码 随机",
+  qrcode: "qr qrcode 二维码 生成",
+  markdown: "markdown md 预览 文档",
+  image: "image compress crop 图片 压缩 裁剪",
+  pdfword: "pdf word docx 文档 转换",
   json: "json 格式化 压缩 校验 树",
   sql: "sql mysql postgres sqlite 格式化 数据库",
   base64: "base64 utf8 编码 解码",
@@ -68,6 +124,17 @@ export const keywords: Record<Id, string> = {
   radix: "radix base bigint 进制 二进制 十六进制",
 };
 export const examples: Record<Id, string> = {
+  textkit: "Hello DevKit\nhello_world\nHello DevKit",
+  unicode: "Hello 开发者 👋",
+  htmlentity: '<div title="DevKit">你好 & Hello</div>',
+  dataconvert: '[{"name":"DevKit","count":22},{"name":"工具箱","count":1}]',
+  color: "#326ddd",
+  password: "",
+  qrcode: "https://example.com",
+  markdown:
+    "# DevKit\n\n**本地处理** · Local tools\n\n- JSON\n- Images\n\n```js\nconsole.log(22);\n```",
+  image: "",
+  pdfword: "",
   json: '{"project":"DevKit","developer":"栈外手记","features":["JSON","SQL","Hash"],"localFirst":true,"largeId":9007199254740993}',
   base64: "Hello, 开发者 👋",
   url: "https://example.com/search?q=开发者&q=DevKit&empty=&token=a%3Db",
@@ -85,7 +152,7 @@ export function validIds(value: unknown): Id[] {
   return Array.isArray(value)
     ? [...new Set(value.filter((id): id is Id => ids.includes(id)))].slice(
         0,
-        12,
+        ids.length,
       )
     : [];
 }

@@ -164,8 +164,10 @@ async function collect(name, parent = root) {
     }
     if (!found) throw Error("License text missing: " + name);
   }
-  for (const dependency of Object.keys(pkg.dependencies ?? {}))
+  for (const dependency of Object.keys(pkg.dependencies ?? {})) {
+    if (Object.hasOwn(pkg.optionalDependencies ?? {}, dependency)) continue;
     await collect(dependency, folder);
+  }
 }
 for (const name of Object.keys(production.dependencies)) await collect(name);
 await fs.writeFile(
@@ -190,7 +192,7 @@ await fs.copyFile(
 );
 await fs.writeFile(
   path.join(target, "README.txt"),
-  "DevKit · 开发者效率工具箱\n开发者：栈外手记\n\n在本机顶箭中打开即可使用。12 个工具均在本地处理，无需登录或付费 API。\n支持中英切换、深浅主题、搜索、收藏、最近使用和手动工具联动。\n输入不自动保存；本机浏览器仅保存偏好和工具 ID。\nJSON、SQL、Base64、URL、时间戳、JWT、正则、Diff、Hash、UUID、Cron、进制转换。\nJWT 仅解析，不验证签名；SQL 仅格式化不执行；SHA 摘要不是加密；Cron 是标准五字段。\n单次文本上限 2 MiB；文件摘要上限 32 MiB；复杂正则会超时终止。\nCmd/Ctrl+K 搜索；Cmd/Ctrl+Enter 执行；Esc 关闭弹窗/应用内全屏。\n",
+  "DevKit · 开发者效率工具箱\n开发者：栈外手记\n\n在本机顶箭中打开即可使用。22 个工具均在本地处理，无需登录或付费 API。\n支持中英切换、深浅主题、搜索、收藏、最近使用和手动工具联动。\n输入不自动保存；本机浏览器仅保存偏好和工具 ID。\nJSON、SQL、Base64、URL、时间戳、JWT、正则、Diff、Hash、UUID、Cron、进制转换、文本整理、Unicode、HTML 实体、JSON/CSV/YAML、颜色、随机密码、二维码、Markdown、图片压缩/裁剪、PDF 转 Word。\nPDF 仅提取文字，不支持 OCR 或原版排版还原。\nJWT 仅解析，不验证签名；SQL 仅格式化不执行；SHA 摘要不是加密；Cron 是标准五字段。\n单次文本上限 2 MiB；文件摘要上限 32 MiB；复杂正则会超时终止。\nCmd/Ctrl+K 搜索；Cmd/Ctrl+Enter 执行；Esc 关闭弹窗/应用内全屏。\n",
 );
 const files = [];
 async function walk(directory, prefix = "") {

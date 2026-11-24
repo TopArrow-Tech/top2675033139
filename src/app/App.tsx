@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  LayoutGrid,
   Star,
   Maximize2,
   Minimize2,
@@ -35,6 +36,7 @@ import {
   Code2,
   ChevronRight,
 } from "lucide-react";
+import ToolCatalog from "./ToolCatalog";
 import type { TimestampState } from "../tools/timestamp/Workbench";
 
 import JsonTree from "../tools/json/Tree";
@@ -45,6 +47,7 @@ import {
   examples,
   categories,
   isAdvanced,
+  isExtended,
   validIds,
   type Id,
 } from "./registry";
@@ -53,6 +56,7 @@ import { zh, en, type Key } from "../locales";
 import { ToolError, check } from "../tools/shared";
 import { parseQuery, buildQuery, type Pair } from "../tools/url/logic";
 const TimestampWorkbench = lazy(() => import("../tools/timestamp/Workbench"));
+const ExtendedWorkbench = lazy(() => import("../tools/extended/Workbench"));
 const Workbench = lazy(() => import("../tools/Workbench"));
 const Editor = lazy(() => import("../components/Editor"));
 type State = {
@@ -132,6 +136,7 @@ export default function App() {
   const [indent, setIndent] = useState(
     initial.indent === "\t" ? "\t" : initial.indent === "    " ? "    " : "  ",
   );
+  const [showAll, setShowAll] = useState(true);
   const [tool, setTool] = useState<Id>("json");
   const [states, setStates] = useState<Record<Id, State>>(initialStates);
   const [favorites, setFavorites] = useState<Id[]>(validIds(initial.favorites));
@@ -202,7 +207,7 @@ export default function App() {
   const workspaceRef = useRef<HTMLElement>(null);
   useEffect(() => {
     workspaceRef.current?.scrollTo({ top: 0 });
-  }, [tool]);
+  }, [tool, showAll]);
   const t = (key: Key) => (lang === "zh" ? zh : en)[key];
   const s = states[tool];
   function notify(message: string) {
@@ -221,6 +226,7 @@ export default function App() {
     setBusy(false);
   }
   function select(id: Id) {
+    setShowAll(false);
     cancel();
     setExpanded(null);
     setRecent((prev) =>
@@ -285,7 +291,8 @@ export default function App() {
     return error instanceof Error ? error.message : t("unknownError");
   }
   function run(chosen?: string) {
-    if (isAdvanced(tool) || tool === "timestamp") {
+    if (showAll) return;
+    if (isAdvanced(tool) || isExtended(tool) || tool === "timestamp") {
       extraRunner.current?.();
       return;
     }
@@ -464,7 +471,9 @@ export default function App() {
             href="#"
             onClick={(e) => {
               e.preventDefault();
-              select("json");
+              cancel();
+              setExpanded(null);
+              setShowAll(true);
             }}
           >
             <span className="logo">
@@ -490,6 +499,18 @@ export default function App() {
             )}
           </button>
           {!collapsed && <div className="nav-caption">{t("workspace")}</div>}
+          <button
+            className={`nav-item all-tools-link ${showAll ? "active" : ""}`}
+            title={t("allTools")}
+            onClick={() => {
+              cancel();
+              setExpanded(null);
+              setShowAll(true);
+            }}
+          >
+            <LayoutGrid size={22} />
+            {!collapsed && <span>{t("allTools")}</span>}
+          </button>
           <nav>
             {!collapsed && (
               <>
@@ -501,7 +522,7 @@ export default function App() {
                   const I = icons[id];
                   return (
                     <button
-                      className={`nav-item ${id === tool ? "active" : ""}`}
+                      className={`nav-item ${id === tool && !showAll ? "active" : ""}`}
                       key={"fav-" + id}
                       onClick={() => select(id)}
                     >
@@ -536,7 +557,7 @@ export default function App() {
                   return (
                     <button
                       title={t(id)}
-                      className={`nav-item ${id === tool ? "active" : ""}`}
+                      className={`nav-item ${id === tool && !showAll ? "active" : ""}`}
                       key={id}
                       onClick={() => select(id)}
                     >
@@ -571,7 +592,7 @@ export default function App() {
             <div className="brand-footer">
               {!collapsed && (
                 <span>
-                  {t("brand")} <small>v1.0.1</small>
+                  {t("brand")} <small>v1.1.0</small>
                 </span>
               )}
               <button
@@ -591,7 +612,19 @@ export default function App() {
         <main>
           <header className="topbar">
             <div className="breadcrumb">
-              DevKit <ChevronRight size={14} /> <span>{t(tool)}</span>
+              <button
+                className="breadcrumb-home"
+                title={t("backToCatalog")}
+                onClick={() => {
+                  cancel();
+                  setExpanded(null);
+                  setShowAll(true);
+                }}
+              >
+                DevKit
+              </button>{" "}
+              <ChevronRight size={14} />{" "}
+              <span>{t(showAll ? "allTools" : tool)}</span>
             </div>
             <div className="header-actions">
               <span className="private-badge">
@@ -621,488 +654,569 @@ export default function App() {
             </div>
           </header>
           <section className="workspace" ref={workspaceRef}>
-            <div className="tool-heading">
-              <div>
-                <div className="eyebrow">{t("phase")}</div>
-                <h1>
-                  <Icon size={29} />
-                  {t(tool)}
-                  <button
-                    className={`icon-button favorite-toggle ${favorites.includes(tool) ? "is-favorite" : ""}`}
-                    aria-pressed={favorites.includes(tool)}
-                    title={t(
-                      favorites.includes(tool) ? "unfavorite" : "favorite",
-                    )}
-                    onClick={() =>
-                      setFavorites((prev) =>
-                        prev.includes(tool)
-                          ? prev.filter((id) => id !== tool)
-                          : [...prev, tool],
-                      )
-                    }
-                  >
-                    <Star
-                      size={19}
-                      fill={favorites.includes(tool) ? "currentColor" : "none"}
-                    />
-                  </button>
-                </h1>
-                <p>{t((tool + "Desc") as Key)}</p>
-              </div>
-              <div className="transfer-bar">
-                <label>
-                  {t("sendTo")}
-                  <select
-                    value={transferTarget}
-                    onChange={(e) => setTransferTarget(e.target.value as Id)}
-                  >
-                    <option value="">{t("selectTool")}</option>
-                    {ids
-                      .filter((id) => id !== tool)
-                      .map((id) => (
-                        <option key={id} value={id}>
-                          {t(id)}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-                <button
-                  disabled={!s.output || !transferTarget}
-                  onClick={transfer}
-                >
-                  {t("transfer")}
-                </button>
-              </div>
-            </div>
-            {tool === "timestamp" ? (
-              <Boundary
-                key={resetVersion}
-                resetKey={tool}
-                message={t("loadError")}
-                reload={t("reload")}
-              >
-                <Suspense
-                  fallback={<div className="empty">{t("editorLoading")}</div>}
-                >
-                  <TimestampWorkbench
-                    input={s.input}
-                    state={s.details as TimestampState | undefined}
-                    onInput={(input) => update({ input, error: "" })}
-                    onState={(details) =>
-                      update({
-                        details,
-                        error:
-                          Object.values(details.errors).find(Boolean) ?? "",
-                      })
-                    }
-                    onOutput={(output) => update({ output })}
-                    zone={zone}
-                    onZone={setZone}
-                    t={t}
-                    copy={copy}
-                    runner={extraRunner}
-                  />
-                </Suspense>
-              </Boundary>
-            ) : isAdvanced(tool) ? (
-              <Boundary
-                key={resetVersion}
-                resetKey={tool}
-                message={t("loadError")}
-                reload={t("reload")}
-              >
-                <Suspense
-                  fallback={<div className="empty">{t("editorLoading")}</div>}
-                >
-                  <Workbench
-                    key={resetVersion}
-                    id={tool}
-                    details={s.details ?? null}
-                    onDetails={(details) => update({ details })}
-                    input={s.input}
-                    second={s.second ?? ""}
-                    output={s.output}
-                    error={s.error}
-                    onInput={(input) => update({ input, error: "" })}
-                    onSecond={(second) => update({ second, error: "" })}
-                    onOutput={(output) => update({ output })}
-                    onError={(error) => update({ error })}
-                    t={t}
-                    theme={theme}
-                    fontSize={fontSize}
-                    copy={copy}
-                    download={download}
-                    runner={extraRunner}
-                  />
-                  {s.error && (
-                    <div className="error-message" role="alert">
-                      {s.error}
-                    </div>
-                  )}
-                </Suspense>
-              </Boundary>
+            {showAll ? (
+              <ToolCatalog
+                t={t}
+                onSelect={select}
+                favorites={favorites}
+                onFavorite={(id) =>
+                  setFavorites((prev) =>
+                    prev.includes(id)
+                      ? prev.filter((v) => v !== id)
+                      : [...prev, id],
+                  )
+                }
+              />
             ) : (
               <>
-                <div className="tool-options">
-                  {tool === "json" && (
-                    <>
-                      <label>
-                        {t("indent")}
-                        <select
-                          value={indent}
-                          onChange={(e) => setIndent(e.target.value)}
-                        >
-                          <option value="  ">2</option>
-                          <option value="    ">4</option>
-                          <option value={"\t"}>{t("tab")}</option>
-                        </select>
-                      </label>
-                      <span className="option-hint">{t("jsonHint")}</span>
-                    </>
-                  )}
-                  {tool === "base64" && (
-                    <>
-                      <label>
-                        {t("mode")}
-                        <select
-                          value={safe ? "url" : "standard"}
-                          onChange={(e) => setSafe(e.target.value === "url")}
-                        >
-                          <option value="standard">{t("standard")}</option>
-                          <option value="url">{t("urlSafe")}</option>
-                        </select>
-                      </label>
-                      <span className="option-hint">UTF-8 / Unicode</span>
-                    </>
-                  )}
-                  {tool === "url" && (
-                    <>
-                      <label>
-                        {t("mode")}
-                        <select
-                          value={full ? "full" : "component"}
-                          onChange={(e) => setFull(e.target.value === "full")}
-                        >
-                          <option value="component">{t("component")}</option>
-                          <option value="full">{t("fullUrl")}</option>
-                        </select>
-                      </label>
-                      <span className="option-hint">{t("urlHint")}</span>
-                    </>
-                  )}
-                </div>
-                <div className="action-bar">
-                  <div className="primary-actions">
-                    {tool === "json" ? (
-                      (["pretty", "minify", "validate", "tree"] as const).map(
-                        (a, i) => (
-                          <button
-                            key={a}
-                            className={i === 0 ? "primary" : ""}
-                            disabled={busy}
-                            onClick={() => run(a)}
-                          >
-                            {i === 0 && <Play size={14} />} {t(a)}
-                          </button>
-                        ),
-                      )
-                    ) : (
-                      <>
-                        <button
-                          className="primary"
-                          onClick={() => run("encode")}
-                        >
-                          <ArrowRight size={15} />
-                          {t("encode")}
-                        </button>
-                        <button onClick={() => run("decode")}>
-                          {t("decode")}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                  <div className="secondary-actions">
-                    {
+                <div className="tool-heading">
+                  <div>
+                    <div className="eyebrow">{t("phase")}</div>
+                    <h1>
+                      <Icon size={29} />
+                      {t(tool)}
                       <button
-                        title={t("compareFullscreen")}
-                        onClick={(e) =>
-                          toggleExpanded("input", e.currentTarget)
+                        className={`icon-button favorite-toggle ${favorites.includes(tool) ? "is-favorite" : ""}`}
+                        aria-pressed={favorites.includes(tool)}
+                        title={t(
+                          favorites.includes(tool) ? "unfavorite" : "favorite",
+                        )}
+                        onClick={() =>
+                          setFavorites((prev) =>
+                            prev.includes(tool)
+                              ? prev.filter(
+                                  (id) =>
+                                    id !== tool &&
+                                    id !== "image" &&
+                                    id !== "pdfword",
+                                )
+                              : [...prev, tool],
+                          )
                         }
                       >
-                        <Maximize2 size={14} />
-                        {t("compareFullscreen")}
+                        <Star
+                          size={19}
+                          fill={
+                            favorites.includes(tool) ? "currentColor" : "none"
+                          }
+                        />
                       </button>
-                    }
+                    </h1>
+                    <p>{t((tool + "Desc") as Key)}</p>
+                  </div>
+                  <div className="transfer-bar">
+                    <label>
+                      {t("sendTo")}
+                      <select
+                        value={transferTarget}
+                        onChange={(e) =>
+                          setTransferTarget(e.target.value as Id)
+                        }
+                      >
+                        <option value="">{t("selectTool")}</option>
+                        {ids
+                          .filter(
+                            (id) =>
+                              id !== tool && id !== "image" && id !== "pdfword",
+                          )
+                          .map((id) => (
+                            <option key={id} value={id}>
+                              {t(id)}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
                     <button
-                      onClick={() => {
-                        cancel();
-                        update({
-                          input: examples[tool],
-                          output: "",
-                          error: "",
-                        });
-                      }}
+                      disabled={!s.output || !transferTarget}
+                      onClick={transfer}
                     >
-                      {t("example")}
+                      {t("transfer")}
                     </button>
-                    {
-                      <button
-                        disabled={!s.output}
-                        onClick={() => {
-                          cancel();
+                  </div>
+                </div>
+                {tool === "timestamp" ? (
+                  <Boundary
+                    key={resetVersion}
+                    resetKey={tool}
+                    message={t("loadError")}
+                    reload={t("reload")}
+                  >
+                    <Suspense
+                      fallback={
+                        <div className="empty">{t("editorLoading")}</div>
+                      }
+                    >
+                      <TimestampWorkbench
+                        input={s.input}
+                        state={s.details as TimestampState | undefined}
+                        onInput={(input) => update({ input, error: "" })}
+                        onState={(details) =>
                           update({
-                            input: s.output,
-                            output: s.input,
-                            error: "",
-                          });
-                        }}
-                      >
-                        <ArrowLeftRight size={14} />
-                        {t("swap")}
-                      </button>
-                    }
-                    <button
-                      onClick={() => {
-                        cancel();
-                        update(blank());
-                        if (tool === "url") setPairs([]);
-                      }}
-                    >
-                      <Trash2 size={14} />
-                      {t("clear")}
-                    </button>
-                  </div>
-                </div>
-                <div
-                  ref={jsonPairRef}
-                  style={
-                    expanded
-                      ? {
-                          gridTemplateColumns: `${jsonSplit}fr 12px ${100 - jsonSplit}fr`,
+                            details,
+                            error:
+                              Object.values(details.errors).find(Boolean) ?? "",
+                          })
                         }
-                      : undefined
-                  }
-                  className={`editors ${expanded ? "editors-fullscreen" : ""}`}
-                >
-                  {expanded && (
-                    <div className="json-fullscreen-toolbar">
-                      <strong>
-                        {t(tool)} · {t("input")} / {t("output")}
-                      </strong>
-                      <span>
-                        {stats.chars.toLocaleString()} {t("chars")}
-                      </span>
-                      <div>
-                        {tool === "json" &&
+                        onOutput={(output) => update({ output })}
+                        zone={zone}
+                        onZone={setZone}
+                        t={t}
+                        copy={copy}
+                        runner={extraRunner}
+                      />
+                    </Suspense>
+                  </Boundary>
+                ) : isExtended(tool) ? (
+                  <Boundary
+                    key={resetVersion}
+                    resetKey={tool}
+                    message={t("loadError")}
+                    reload={t("reload")}
+                  >
+                    <Suspense
+                      fallback={
+                        <div className="empty">{t("editorLoading")}</div>
+                      }
+                    >
+                      <ExtendedWorkbench
+                        key={`${tool}-${resetVersion}`}
+                        id={tool}
+                        input={s.input}
+                        output={s.output}
+                        onInput={(input) => update({ input, error: "" })}
+                        onOutput={(output) => update({ output })}
+                        t={t}
+                        theme={theme}
+                        fontSize={fontSize}
+                        copy={copy}
+                        runner={extraRunner}
+                      />
+                    </Suspense>
+                  </Boundary>
+                ) : isAdvanced(tool) ? (
+                  <Boundary
+                    key={resetVersion}
+                    resetKey={tool}
+                    message={t("loadError")}
+                    reload={t("reload")}
+                  >
+                    <Suspense
+                      fallback={
+                        <div className="empty">{t("editorLoading")}</div>
+                      }
+                    >
+                      <Workbench
+                        key={resetVersion}
+                        id={tool}
+                        details={s.details ?? null}
+                        onDetails={(details) => update({ details })}
+                        input={s.input}
+                        second={s.second ?? ""}
+                        output={s.output}
+                        error={s.error}
+                        onInput={(input) => update({ input, error: "" })}
+                        onSecond={(second) => update({ second, error: "" })}
+                        onOutput={(output) => update({ output })}
+                        onError={(error) => update({ error })}
+                        t={t}
+                        theme={theme}
+                        fontSize={fontSize}
+                        copy={copy}
+                        download={download}
+                        runner={extraRunner}
+                      />
+                      {s.error && (
+                        <div className="error-message" role="alert">
+                          {s.error}
+                        </div>
+                      )}
+                    </Suspense>
+                  </Boundary>
+                ) : (
+                  <>
+                    <div className="tool-options">
+                      {tool === "json" && (
+                        <>
+                          <label>
+                            {t("indent")}
+                            <select
+                              value={indent}
+                              onChange={(e) => setIndent(e.target.value)}
+                            >
+                              <option value="  ">2</option>
+                              <option value="    ">4</option>
+                              <option value={"\t"}>{t("tab")}</option>
+                            </select>
+                          </label>
+                          <span className="option-hint">{t("jsonHint")}</span>
+                        </>
+                      )}
+                      {tool === "base64" && (
+                        <>
+                          <label>
+                            {t("mode")}
+                            <select
+                              value={safe ? "url" : "standard"}
+                              onChange={(e) =>
+                                setSafe(e.target.value === "url")
+                              }
+                            >
+                              <option value="standard">{t("standard")}</option>
+                              <option value="url">{t("urlSafe")}</option>
+                            </select>
+                          </label>
+                          <span className="option-hint">UTF-8 / Unicode</span>
+                        </>
+                      )}
+                      {tool === "url" && (
+                        <>
+                          <label>
+                            {t("mode")}
+                            <select
+                              value={full ? "full" : "component"}
+                              onChange={(e) =>
+                                setFull(e.target.value === "full")
+                              }
+                            >
+                              <option value="component">
+                                {t("component")}
+                              </option>
+                              <option value="full">{t("fullUrl")}</option>
+                            </select>
+                          </label>
+                          <span className="option-hint">{t("urlHint")}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="action-bar">
+                      <div className="primary-actions">
+                        {tool === "json" ? (
                           (
                             ["pretty", "minify", "validate", "tree"] as const
-                          ).map((a) => (
+                          ).map((a, i) => (
                             <button
                               key={a}
+                              className={i === 0 ? "primary" : ""}
                               disabled={busy}
                               onClick={() => run(a)}
                             >
-                              {t(a)}
+                              {i === 0 && <Play size={14} />} {t(a)}
                             </button>
-                          ))}
-                        {tool !== "json" && (
+                          ))
+                        ) : (
                           <>
                             <button
-                              disabled={busy}
+                              className="primary"
                               onClick={() => run("encode")}
                             >
+                              <ArrowRight size={15} />
                               {t("encode")}
                             </button>
-                            <button
-                              disabled={busy}
-                              onClick={() => run("decode")}
-                            >
+                            <button onClick={() => run("decode")}>
                               {t("decode")}
                             </button>
                           </>
                         )}
-                        <button onClick={closeExpanded}>
-                          <Minimize2 size={14} />
-                          {t("exitFullscreen")} <kbd>Esc</kbd>
-                        </button>
                       </div>
-                      {s.error && (
-                        <p className="fullscreen-error" role="alert">
-                          {s.error}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  <section
-                    className="editor-panel"
-                    aria-label={Boolean(expanded) ? t("input") : undefined}
-                  >
-                    <div className="panel-header">
-                      <span>
-                        <span className="panel-dot" />
-                        {t("input")}
-                        <small>{t("source")}</small>
-                      </span>
-                      <div>
-                        <button onClick={paste}>
-                          <Clipboard size={13} />
-                          {t("paste")}
-                        </button>
-                      </div>
-                    </div>
-                    {editor(s.input)}
-                  </section>
-                  {expanded && (
-                    <SplitDivider
-                      container={jsonPairRef}
-                      value={jsonSplit}
-                      onChange={setJsonSplit}
-                      label={t("resizeEditors")}
-                      hint={t("resizeEditorsHint")}
-                      valueText={
-                        t("input") +
-                        " " +
-                        Math.round(jsonSplit) +
-                        "% · " +
-                        t("output") +
-                        " " +
-                        Math.round(100 - jsonSplit) +
-                        "%"
-                      }
-                    />
-                  )}
-                  <section
-                    className="editor-panel"
-                    aria-label={Boolean(expanded) ? t("output") : undefined}
-                  >
-                    <div className="panel-header">
-                      <span>
-                        <span className="panel-dot output-dot" />
-                        {t("output")}
-                        <small>{t("target")}</small>
-                      </span>
-                      <div>
-                        <button
-                          disabled={!s.output}
-                          title={t("download")}
-                          onClick={download}
-                        >
-                          <Download size={14} />
-                        </button>
-                        <button
-                          disabled={!s.output}
-                          onClick={() => copy(s.output)}
-                        >
-                          <Copy size={13} />
-                          {t("copy")}
-                        </button>
-                      </div>
-                    </div>
-                    {s.output ? (
-                      tool === "json" && tree ? (
-                        s.output.split("\n").length > 3000 ? (
-                          <div className="empty">{t("treeLimit")}</div>
-                        ) : (
-                          <JsonTree text={s.output} />
-                        )
-                      ) : (
-                        editor(s.output, true)
-                      )
-                    ) : (
-                      <div className="empty">
-                        <div className="empty-icon">
-                          <Icon size={32} />
-                        </div>
-                        <span>{busy ? t("editorLoading") : t("noResult")}</span>
-                      </div>
-                    )}
-                  </section>
-                </div>
-                {s.error && (
-                  <div className="error-message" role="alert">
-                    <X size={16} />
-                    {s.error}
-                  </div>
-                )}
-                {tool === "url" && (
-                  <section className="query-panel">
-                    <div className="query-heading">
-                      <h3>{t("query")}</h3>
-                      <div>
-                        <button onClick={queryParse}>{t("parseQuery")}</button>
-                        <button
-                          onClick={() =>
-                            setPairs((prev) => [...prev, ["", ""]])
-                          }
-                        >
-                          <Plus size={14} />
-                          {t("add")}
-                        </button>
-                        <button
-                          onClick={() => {
-                            try {
-                              const output = buildQuery(pairs);
-                              check(output, true);
-                              update({ output, error: "" });
-                            } catch (e) {
-                              update({ error: errorText(e) });
-                            }
-                          }}
-                        >
-                          {t("buildQuery")}
-                        </button>
-                      </div>
-                    </div>
-                    <p>{t("queryHint")}</p>
-                    {pairs.length === 0 ? (
-                      <div className="query-empty">{t("noQuery")}</div>
-                    ) : (
-                      pairs.map(([key, value], i) => (
-                        <div className="query-row" key={i}>
-                          <span>{i + 1}</span>
-                          <input
-                            aria-label={`${t("key")} ${i + 1}`}
-                            placeholder={t("key")}
-                            value={key}
-                            onChange={(e) =>
-                              setPairs((prev) =>
-                                prev.map((pair, n) =>
-                                  n === i ? [e.target.value, pair[1]] : pair,
-                                ),
-                              )
-                            }
-                          />
-                          <input
-                            aria-label={`${t("value")} ${i + 1}`}
-                            placeholder={t("value")}
-                            value={value}
-                            onChange={(e) =>
-                              setPairs((prev) =>
-                                prev.map((pair, n) =>
-                                  n === i ? [pair[0], e.target.value] : pair,
-                                ),
-                              )
-                            }
-                          />
+                      <div className="secondary-actions">
+                        {
                           <button
-                            title={t("remove")}
-                            onClick={() =>
-                              setPairs((prev) => prev.filter((_, n) => n !== i))
+                            title={t("compareFullscreen")}
+                            onClick={(e) =>
+                              toggleExpanded("input", e.currentTarget)
                             }
                           >
-                            <X size={15} />
+                            <Maximize2 size={14} />
+                            {t("compareFullscreen")}
                           </button>
+                        }
+                        <button
+                          onClick={() => {
+                            cancel();
+                            update({
+                              input: examples[tool],
+                              output: "",
+                              error: "",
+                            });
+                          }}
+                        >
+                          {t("example")}
+                        </button>
+                        {
+                          <button
+                            disabled={!s.output}
+                            onClick={() => {
+                              cancel();
+                              update({
+                                input: s.output,
+                                output: s.input,
+                                error: "",
+                              });
+                            }}
+                          >
+                            <ArrowLeftRight size={14} />
+                            {t("swap")}
+                          </button>
+                        }
+                        <button
+                          onClick={() => {
+                            cancel();
+                            update(blank());
+                            if (tool === "url") setPairs([]);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                          {t("clear")}
+                        </button>
+                      </div>
+                    </div>
+                    <div
+                      ref={jsonPairRef}
+                      style={
+                        expanded
+                          ? {
+                              gridTemplateColumns: `${jsonSplit}fr 12px ${100 - jsonSplit}fr`,
+                            }
+                          : undefined
+                      }
+                      className={`editors ${expanded ? "editors-fullscreen" : ""}`}
+                    >
+                      {expanded && (
+                        <div className="json-fullscreen-toolbar">
+                          <strong>
+                            {t(tool)} · {t("input")} / {t("output")}
+                          </strong>
+                          <span>
+                            {stats.chars.toLocaleString()} {t("chars")}
+                          </span>
+                          <div>
+                            {tool === "json" &&
+                              (
+                                [
+                                  "pretty",
+                                  "minify",
+                                  "validate",
+                                  "tree",
+                                ] as const
+                              ).map((a) => (
+                                <button
+                                  key={a}
+                                  disabled={busy}
+                                  onClick={() => run(a)}
+                                >
+                                  {t(a)}
+                                </button>
+                              ))}
+                            {tool !== "json" && (
+                              <>
+                                <button
+                                  disabled={busy}
+                                  onClick={() => run("encode")}
+                                >
+                                  {t("encode")}
+                                </button>
+                                <button
+                                  disabled={busy}
+                                  onClick={() => run("decode")}
+                                >
+                                  {t("decode")}
+                                </button>
+                              </>
+                            )}
+                            <button onClick={closeExpanded}>
+                              <Minimize2 size={14} />
+                              {t("exitFullscreen")} <kbd>Esc</kbd>
+                            </button>
+                          </div>
+                          {s.error && (
+                            <p className="fullscreen-error" role="alert">
+                              {s.error}
+                            </p>
+                          )}
                         </div>
-                      ))
+                      )}
+                      <section
+                        className="editor-panel"
+                        aria-label={Boolean(expanded) ? t("input") : undefined}
+                      >
+                        <div className="panel-header">
+                          <span>
+                            <span className="panel-dot" />
+                            {t("input")}
+                            <small>{t("source")}</small>
+                          </span>
+                          <div>
+                            <button onClick={paste}>
+                              <Clipboard size={13} />
+                              {t("paste")}
+                            </button>
+                          </div>
+                        </div>
+                        {editor(s.input)}
+                      </section>
+                      {expanded && (
+                        <SplitDivider
+                          container={jsonPairRef}
+                          value={jsonSplit}
+                          onChange={setJsonSplit}
+                          label={t("resizeEditors")}
+                          hint={t("resizeEditorsHint")}
+                          valueText={
+                            t("input") +
+                            " " +
+                            Math.round(jsonSplit) +
+                            "% · " +
+                            t("output") +
+                            " " +
+                            Math.round(100 - jsonSplit) +
+                            "%"
+                          }
+                        />
+                      )}
+                      <section
+                        className="editor-panel"
+                        aria-label={Boolean(expanded) ? t("output") : undefined}
+                      >
+                        <div className="panel-header">
+                          <span>
+                            <span className="panel-dot output-dot" />
+                            {t("output")}
+                            <small>{t("target")}</small>
+                          </span>
+                          <div>
+                            <button
+                              disabled={!s.output}
+                              title={t("download")}
+                              onClick={download}
+                            >
+                              <Download size={14} />
+                            </button>
+                            <button
+                              disabled={!s.output}
+                              onClick={() => copy(s.output)}
+                            >
+                              <Copy size={13} />
+                              {t("copy")}
+                            </button>
+                          </div>
+                        </div>
+                        {s.output ? (
+                          tool === "json" && tree ? (
+                            s.output.split("\n").length > 3000 ? (
+                              <div className="empty">{t("treeLimit")}</div>
+                            ) : (
+                              <JsonTree text={s.output} />
+                            )
+                          ) : (
+                            editor(s.output, true)
+                          )
+                        ) : (
+                          <div className="empty">
+                            <div className="empty-icon">
+                              <Icon size={32} />
+                            </div>
+                            <span>
+                              {busy ? t("editorLoading") : t("noResult")}
+                            </span>
+                          </div>
+                        )}
+                      </section>
+                    </div>
+                    {s.error && (
+                      <div className="error-message" role="alert">
+                        <X size={16} />
+                        {s.error}
+                      </div>
                     )}
-                  </section>
+                    {tool === "url" && (
+                      <section className="query-panel">
+                        <div className="query-heading">
+                          <h3>{t("query")}</h3>
+                          <div>
+                            <button onClick={queryParse}>
+                              {t("parseQuery")}
+                            </button>
+                            <button
+                              onClick={() =>
+                                setPairs((prev) => [...prev, ["", ""]])
+                              }
+                            >
+                              <Plus size={14} />
+                              {t("add")}
+                            </button>
+                            <button
+                              onClick={() => {
+                                try {
+                                  const output = buildQuery(pairs);
+                                  check(output, true);
+                                  update({ output, error: "" });
+                                } catch (e) {
+                                  update({ error: errorText(e) });
+                                }
+                              }}
+                            >
+                              {t("buildQuery")}
+                            </button>
+                          </div>
+                        </div>
+                        <p>{t("queryHint")}</p>
+                        {pairs.length === 0 ? (
+                          <div className="query-empty">{t("noQuery")}</div>
+                        ) : (
+                          pairs.map(([key, value], i) => (
+                            <div className="query-row" key={i}>
+                              <span>{i + 1}</span>
+                              <input
+                                aria-label={`${t("key")} ${i + 1}`}
+                                placeholder={t("key")}
+                                value={key}
+                                onChange={(e) =>
+                                  setPairs((prev) =>
+                                    prev.map((pair, n) =>
+                                      n === i
+                                        ? [e.target.value, pair[1]]
+                                        : pair,
+                                    ),
+                                  )
+                                }
+                              />
+                              <input
+                                aria-label={`${t("value")} ${i + 1}`}
+                                placeholder={t("value")}
+                                value={value}
+                                onChange={(e) =>
+                                  setPairs((prev) =>
+                                    prev.map((pair, n) =>
+                                      n === i
+                                        ? [pair[0], e.target.value]
+                                        : pair,
+                                    ),
+                                  )
+                                }
+                              />
+                              <button
+                                title={t("remove")}
+                                onClick={() =>
+                                  setPairs((prev) =>
+                                    prev.filter((_, n) => n !== i),
+                                  )
+                                }
+                              >
+                                <X size={15} />
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </section>
+                    )}
+                  </>
                 )}
+                <div className="workspace-note">
+                  <ShieldCheck size={14} />
+                  <span>{t("privacy")}</span>
+                </div>
               </>
             )}
-            <div className="workspace-note">
-              <ShieldCheck size={14} />
-              <span>{t("privacy")}</span>
-            </div>
           </section>
           <footer className="statusbar">
             <span className={s.error ? "status-error" : "status-ready"}>

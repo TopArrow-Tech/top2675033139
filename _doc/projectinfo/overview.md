@@ -4,7 +4,7 @@
 - 应用 ID：zhanwai-devkit（发布后不可修改）
 - 显示名：开发者效率工具箱 / DevKit
 - 开发者：栈外手记
-- 版本：1.0.1，完整 12 工具
+- 版本：1.1.0，22 个工具入口
 - 运行时：顶箭 Node，manifest 最低 22；开发机顶箭内置 Node 24
 
 ## 技术栈
@@ -65,3 +65,8 @@ JSON 双栏加入 `editor/SplitDivider.tsx`；`split.ts` 限制 20%–80% 比例
 
 ## 发布目录体积
 node_modules 不是运行依赖，发布前应移出应用目录或删除；仅修改源码后需要恢复依赖并重新构建 public。当前开发依赖在系统临时目录以 devkit-build-deps-* 暂存，若系统已清理则按 package-lock.json 重新安装。不要以软链接把开发依赖放回待发布目录。
+
+## 1.1.0 扩展
+新增图片压缩/裁剪、文字 PDF 转 Word、文本整理、Unicode、HTML 实体、JSON/CSV/YAML、颜色、密码、二维码和 Markdown。架构与限制见 extended_tools.md。
+
+默认入口改为 app/ToolCatalog.tsx 网格目录，App 使用 showAll 区分目录与工具工作区，目录不是工具 ID。品牌与“全部工具”按钮返回目录，所有原工具 ID 不变。

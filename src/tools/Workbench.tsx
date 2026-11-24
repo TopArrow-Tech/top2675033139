@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import HeightDivider from "../editor/HeightDivider";
 import SplitDivider from "../editor/SplitDivider";
+import FilePicker from "../components/FilePicker";
+import NumberInput from "../components/NumberInput";
 import type { Key } from "../locales";
 import { examples, type AdvancedId } from "../app/registry";
 import { check, ToolError } from "./shared";
@@ -405,10 +407,12 @@ export default function Workbench(p: Props) {
                 ))}
               </select>,
             )}
-            <label className="file-control">
+            <div className="file-control">
               {t("file")}
-              <input
-                type="file"
+              <FilePicker
+                label={t("chooseFileLocal")}
+                emptyText={t("noFilesSelected")}
+                fileNames={file ? [file.name] : []}
                 key={file?.name ?? "none"}
                 onChange={(e) => {
                   stop();
@@ -428,7 +432,7 @@ export default function Workbench(p: Props) {
                   {file.name} · {file.size.toLocaleString()} {t("bytes")}
                 </span>
               )}
-            </label>
+            </div>
             {file && (
               <button
                 onClick={() => {
@@ -445,12 +449,11 @@ export default function Workbench(p: Props) {
         {id === "uuid" &&
           optionLabel(
             "count",
-            <input
-              type="number"
+            <NumberInput
               min={1}
               max={1000}
               value={options.count}
-              onChange={(e) => opt({ count: Number(e.target.value) })}
+              onChange={(value) => opt({ count: value })}
             />,
           )}
         {id === "cron" && (

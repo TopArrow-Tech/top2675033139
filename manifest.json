@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "id": "top2675033139",
-  "name": "开发者效率工具箱 · 可拖动分栏与日期补齐版",
-  "name_en": "DevKit · Resizable Panels & Date Input",
+  "name": "开发者效率工具箱 · 全能工具与实时预览版",
+  "name_en": "DevKit · More Tools & Live Preview",
   "description": "DevKit · 栈外手记出品，本地优先的开发者工作台",
   "runtime": { "type": "node", "min_version": "22.0" },
   "entry": { "main": "server/main.mjs", "health": "/__health" },

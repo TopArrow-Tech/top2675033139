@@ -18,6 +18,7 @@ By [栈外手记](https://www.toparrow.top/web/publisher/%E6%A0%88%E5%A4%96%E6%8
 | --- | --- | --- |
 | [DevKit](https://github.com/TopArrow-Tech/top2675033139) | [栈外手记](https://www.toparrow.top/web/publisher/%E6%A0%88%E5%A4%96%E6%89%8B%E8%AE%B0) | DevKit is a local toolkit for developers, QA engineers, and operations professionals. It brings everyday data-processing… [On TopArrow](https://www.toparrow.top/web/version/top2675033139-x0rncy) |
 | [DevKit · Resizable Panels & Date Input](https://github.com/TopArrow-Tech/top2675033139/tree/top2675033139-39olj6) | [栈外手记](https://www.toparrow.top/web/publisher/%E6%A0%88%E5%A4%96%E6%89%8B%E8%AE%B0) | This update improves workspace layouts, text comparison, and date input. - **Expanded workspaces**: View inputs and resu… [On TopArrow](https://www.toparrow.top/web/version/top2675033139-39olj6) |
+| [DevKit · More Tools & Live Preview](https://github.com/TopArrow-Tech/top2675033139/tree/top2675033139-qa5v6t) | [栈外手记](https://www.toparrow.top/web/publisher/%E6%A0%88%E5%A4%96%E6%89%8B%E8%AE%B0) | This update expands DevKit to 22 tool entries and improves navigation, file processing, and live previews. - **All Tools… [On TopArrow](https://www.toparrow.top/web/version/top2675033139-qa5v6t) |
 
 ## Get the app
 
